@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import 'auth_provider.dart';
@@ -14,27 +15,32 @@ class SignupScreen extends StatefulWidget {
 
 class _SignupScreenState extends State<SignupScreen>
     with SingleTickerProviderStateMixin {
-  final _formKey = GlobalKey<FormState>();
-  final nameController = TextEditingController();
-  final emailController = TextEditingController();
+  final _formKey           = GlobalKey<FormState>();
+  final nameController     = TextEditingController();
+  final emailController    = TextEditingController();
   final passwordController = TextEditingController();
+  final budgetController   = TextEditingController();   // ← NEW
+
   bool _obscurePassword = true;
 
   late AnimationController _animController;
-  late Animation<double> _fadeAnim;
-  late Animation<Offset> _slideAnim;
+  late Animation<double>   _fadeAnim;
+  late Animation<Offset>   _slideAnim;
 
   @override
   void initState() {
     super.initState();
     _animController = AnimationController(
-      vsync: this,
+      vsync:    this,
       duration: const Duration(milliseconds: 900),
     );
-    _fadeAnim = CurvedAnimation(parent: _animController, curve: Curves.easeOut);
+    _fadeAnim = CurvedAnimation(
+      parent: _animController,
+      curve:  Curves.easeOut,
+    );
     _slideAnim = Tween<Offset>(
       begin: const Offset(0, 0.08),
-      end: Offset.zero,
+      end:   Offset.zero,
     ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
     _animController.forward();
   }
@@ -45,27 +51,28 @@ class _SignupScreenState extends State<SignupScreen>
     nameController.dispose();
     emailController.dispose();
     passwordController.dispose();
+    budgetController.dispose();
     super.dispose();
   }
 
-  // ── IDENTICAL LOGIC ────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────────────
   Future<void> signUpUser() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final authProvider =
-        Provider.of<AuthProvider>(context, listen: false);
+    final budgetLimit = double.tryParse(budgetController.text.trim()) ?? 0;
 
-    final user = await authProvider.signUp(
-      name: nameController.text.trim(),
-      email: emailController.text.trim(),
-      password: passwordController.text.trim(),
+    final user = await Provider.of<AuthProvider>(context, listen: false).signUp(
+      name:        nameController.text.trim(),
+      email:       emailController.text.trim(),
+      password:    passwordController.text.trim(),
+      budgetLimit: budgetLimit,
     );
 
     if (!mounted) return;
 
     if (user != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Account Created')),
+        const SnackBar(content: Text('Account Created!')),
       );
       Navigator.pushReplacement(
         context,
@@ -78,7 +85,7 @@ class _SignupScreenState extends State<SignupScreen>
     }
   }
 
-  // ── BUILD ──────────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
@@ -99,7 +106,7 @@ class _SignupScreenState extends State<SignupScreen>
                     children: [
                       const SizedBox(height: 20),
 
-                      // ── Back button ────────────────────────────────────────
+                      // ── Back button ──────────────────────────────────────
                       GestureDetector(
                         onTap: () => Navigator.pop(context),
                         child: Container(
@@ -123,13 +130,13 @@ class _SignupScreenState extends State<SignupScreen>
 
                       const SizedBox(height: 36),
 
-                      // ── Headline ───────────────────────────────────────────
+                      // ── Headline ─────────────────────────────────────────
                       const Text(
                         "Create account",
                         style: TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 32,
-                          fontWeight: FontWeight.w800,
+                          color:       AppColors.textPrimary,
+                          fontSize:    32,
+                          fontWeight:  FontWeight.w800,
                           letterSpacing: -0.8,
                         ),
                       ),
@@ -137,14 +144,14 @@ class _SignupScreenState extends State<SignupScreen>
                       const Text(
                         "Start tracking your expenses today",
                         style: TextStyle(
-                          color: AppColors.textSecondary,
+                          color:    AppColors.textSecondary,
                           fontSize: 15,
                         ),
                       ),
 
                       const SizedBox(height: 44),
 
-                      // ── Name ───────────────────────────────────────────────
+                      // ── Full name ─────────────────────────────────────────
                       TextFormField(
                         controller: nameController,
                         keyboardType: TextInputType.name,
@@ -158,17 +165,13 @@ class _SignupScreenState extends State<SignupScreen>
                             size: 20,
                           ),
                         ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return "Enter your name";
-                          }
-                          return null;
-                        },
+                        validator: (v) =>
+                            (v == null || v.isEmpty) ? "Enter your name" : null,
                       ),
 
                       const SizedBox(height: 16),
 
-                      // ── Email ──────────────────────────────────────────────
+                      // ── Email ─────────────────────────────────────────────
                       TextFormField(
                         controller: emailController,
                         keyboardType: TextInputType.emailAddress,
@@ -181,20 +184,16 @@ class _SignupScreenState extends State<SignupScreen>
                             size: 20,
                           ),
                         ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return "Enter email";
-                          }
-                          if (!value.contains("@")) {
-                            return "Enter valid email";
-                          }
+                        validator: (v) {
+                          if (v == null || v.isEmpty) return "Enter email";
+                          if (!v.contains("@")) return "Enter valid email";
                           return null;
                         },
                       ),
 
                       const SizedBox(height: 16),
 
-                      // ── Password ───────────────────────────────────────────
+                      // ── Password ──────────────────────────────────────────
                       TextFormField(
                         controller: passwordController,
                         obscureText: _obscurePassword,
@@ -214,34 +213,72 @@ class _SignupScreenState extends State<SignupScreen>
                               color: AppColors.textSecondary,
                               size: 20,
                             ),
-                            onPressed: () {
-                              setState(() {
-                                _obscurePassword = !_obscurePassword;
-                              });
-                            },
+                            onPressed: () =>
+                                setState(() => _obscurePassword = !_obscurePassword),
                           ),
                         ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return "Enter password";
-                          }
-                          if (value.length < 6) {
-                            return "Minimum 6 characters";
-                          }
+                        validator: (v) {
+                          if (v == null || v.isEmpty) return "Enter password";
+                          if (v.length < 6) return "Minimum 6 characters";
                           return null;
                         },
                       ),
 
+                      const SizedBox(height: 16),
+
+                      // ── Monthly Budget Limit (NEW) ─────────────────────────
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          TextFormField(
+                            controller: budgetController,
+                            keyboardType: const TextInputType.numberWithOptions(
+                                decimal: true),
+                            inputFormatters: [
+                              FilteringTextInputFormatter.allow(
+                                  RegExp(r'^\d+\.?\d{0,2}')),
+                            ],
+                            style: const TextStyle(color: AppColors.textPrimary),
+                            decoration: appInputDecoration(
+                              label: "Monthly budget limit (Rs)",
+                              prefixIcon: const Icon(
+                                Icons.account_balance_wallet_outlined,
+                                color: AppColors.textSecondary,
+                                size: 20,
+                              ),
+                            ),
+                            validator: (v) {
+                              if (v == null || v.isEmpty) {
+                                return "Enter your monthly budget";
+                              }
+                              final val = double.tryParse(v);
+                              if (val == null || val <= 0) {
+                                return "Enter a valid amount";
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 6),
+                          const Text(
+                            "  You can change this later from the Dashboard.",
+                            style: TextStyle(
+                              color:    AppColors.textSecondary,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+
                       const SizedBox(height: 36),
 
-                      // ── Create Account button ──────────────────────────────
+                      // ── Create Account button ─────────────────────────────
                       authProvider.isLoading
                           ? const Center(
                               child: SizedBox(
-                                width: 26,
+                                width:  26,
                                 height: 26,
                                 child: CircularProgressIndicator(
-                                  color: AppColors.primary,
+                                  color:       AppColors.primary,
                                   strokeWidth: 2.5,
                                 ),
                               ),
@@ -251,9 +288,9 @@ class _SignupScreenState extends State<SignupScreen>
                               child: const Text(
                                 "Create Account",
                                 style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
+                                  color:         Colors.white,
+                                  fontSize:      16,
+                                  fontWeight:    FontWeight.w700,
                                   letterSpacing: 0.3,
                                 ),
                               ),
@@ -261,7 +298,7 @@ class _SignupScreenState extends State<SignupScreen>
 
                       const SizedBox(height: 28),
 
-                      // ── Sign in link ───────────────────────────────────────
+                      // ── Sign in link ──────────────────────────────────────
                       Center(
                         child: GestureDetector(
                           onTap: () => Navigator.pop(context),
@@ -269,14 +306,14 @@ class _SignupScreenState extends State<SignupScreen>
                             text: const TextSpan(
                               text: "Already have an account?  ",
                               style: TextStyle(
-                                color: AppColors.textSecondary,
+                                color:    AppColors.textSecondary,
                                 fontSize: 14,
                               ),
                               children: [
                                 TextSpan(
                                   text: "Sign in",
                                   style: TextStyle(
-                                    color: AppColors.primary,
+                                    color:      AppColors.primary,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),

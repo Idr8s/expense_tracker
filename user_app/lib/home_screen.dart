@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import 'auth_provider.dart';
 import 'expense_provider.dart';
 import 'expense_screen.dart';
+import 'charts_screen.dart';
+import 'dashboard_screen.dart';
 import 'login_screen.dart';
 import 'app_theme.dart';
 
@@ -18,6 +20,7 @@ class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _animController;
   late Animation<double> _fadeAnim;
+  int _currentIndex = 0;
 
   @override
   void initState() {
@@ -67,6 +70,90 @@ class _HomeScreenState extends State<HomeScreen>
     // IDENTICAL LOGIC
     final total = expenses.fold<double>(0, (sum, e) => sum + e.amount);
 
+    final List<Widget> screens = [
+      _buildHomeBody(context, expenseProvider, expenses, total),
+      const DashboardScreen(),
+      ChartsScreen(expenses: expenses),
+    ];
+
+    return Scaffold(
+      backgroundColor: AppColors.bg,
+      body: IndexedStack(index: _currentIndex, children: screens),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (i) => setState(() => _currentIndex = i),
+        backgroundColor: AppColors.surface,
+        selectedItemColor: AppColors.primary,
+        unselectedItemColor: AppColors.textSecondary,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_rounded),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.dashboard_rounded),
+            label: 'Dashboard',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.bar_chart_rounded),
+            label: 'Analytics',
+          ),
+        ],
+      ),
+      floatingActionButton: _currentIndex == 0
+          ? Container(
+              decoration: BoxDecoration(
+                gradient: AppGradients.primary,
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withOpacity(0.4),
+                    blurRadius: 20,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const AddExpenseScreen()),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(18),
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.add_rounded, color: Colors.white, size: 22),
+                        SizedBox(width: 8),
+                        Text(
+                          "Add Expense",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            )
+          : null,
+    );
+  }
+
+  Widget _buildHomeBody(
+    BuildContext context,
+    ExpenseProvider expenseProvider,
+    List expenses,
+    double total,
+  ) {
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: Stack(
@@ -314,52 +401,6 @@ class _HomeScreenState extends State<HomeScreen>
             ),
           ),
         ],
-      ),
-
-      // ── FAB ─────────────────────────────────────────────────────────────────
-      floatingActionButton: Container(
-        decoration: BoxDecoration(
-          gradient: AppGradients.primary,
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withOpacity(0.4),
-              blurRadius: 20,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () {
-              // IDENTICAL LOGIC
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const AddExpenseScreen()),
-              );
-            },
-            borderRadius: BorderRadius.circular(18),
-            child: const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.add_rounded, color: Colors.white, size: 22),
-                  SizedBox(width: 8),
-                  Text(
-                    "Add Expense",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 15,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
       ),
     );
   }
