@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
-// import 'firebase_options.dart'; // Uncomment this after running 'flutterfire configure'
+ import 'firebase_options.dart'; // Uncomment this after running 'flutterfire configure'
 import 'providers/auth_provider.dart';
 import 'providers/admin_provider.dart';
 import 'screens/login/login_screen.dart';
@@ -11,10 +11,9 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   try {
-    // Note: If you run into errors here, you need to run 'flutterfire configure'
-    // in your terminal to generate the firebase_options.dart file.
+   
     await Firebase.initializeApp(
-      // options: DefaultFirebaseOptions.currentPlatform, // Uncomment after configuring
+       options: DefaultFirebaseOptions.currentPlatform, // Uncomment after configuring
     ); 
   } catch (e) {
     debugPrint('Firebase initialization error: $e');

@@ -10,9 +10,10 @@ class DatabaseService {
     return _db.collection('users').snapshots().map((snapshot) => snapshot.docs.length);
   }
 
-  Stream<int> getTotalExpensesCount() {
-    return _db.collection('expenses').snapshots().map((snapshot) => snapshot.docs.length);
-  }
+Stream<int> getTotalExpensesCount() {
+  return _db.collectionGroup('expenses').snapshots()
+      .map((snapshot) => snapshot.docs.length);
+}
 
   // Get all users
   Stream<List<UserModel>> getUsers() {
@@ -22,9 +23,13 @@ class DatabaseService {
 
   // Get all expenses
   Stream<List<ExpenseModel>> getExpenses() {
-    return _db.collection('expenses').orderBy('date', descending: true).snapshots().map((snapshot) =>
-        snapshot.docs.map((doc) => ExpenseModel.fromMap(doc.data(), doc.id)).toList());
-  }
+  return _db.collectionGroup('expenses')
+      
+      .snapshots()
+      .map((snapshot) =>
+          snapshot.docs.map((doc) =>
+              ExpenseModel.fromJson(doc.data(), doc.id)).toList());
+}
 
   // Delete user (Optional as per spec)
   Future<void> deleteUser(String userId) async {

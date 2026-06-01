@@ -2,41 +2,46 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ExpenseModel {
   final String id;
-  final String userId;
+  final String title;
   final double amount;
   final String category;
-  final String description;
+  final String note;
   final DateTime date;
 
   ExpenseModel({
     required this.id,
-    required this.userId,
+    required this.title,
     required this.amount,
     required this.category,
-    required this.description,
+    required this.note,
     required this.date,
   });
 
-  factory ExpenseModel.fromMap(Map<String, dynamic> data, String documentId) {
+  factory ExpenseModel.fromJson(
+    Map<String, dynamic> json,
+    String id,
+  ) {
     return ExpenseModel(
-      id: documentId,
-      userId: data['userId'] ?? '',
-      amount: (data['amount'] ?? 0.0).toDouble(),
-      category: data['category'] ?? '',
-      description: data['description'] ?? '',
-      date: data['date'] != null 
-          ? (data['date'] as Timestamp).toDate() 
-          : DateTime.now(),
+      id: id,
+      title: json['title'] ?? '',
+      amount: (json['amount'] ?? 0).toDouble(),
+      category: json['category'] ?? '',
+      note: json['note'] ?? '',
+      date: (json['date'] as Timestamp).toDate(),
     );
   }
 
-  Map<String, dynamic> toMap() {
+  Map<String, dynamic> toJson() {
     return {
-      'userId': userId,
+      'title': title,
       'amount': amount,
       'category': category,
-      'description': description,
+      'note': note,
       'date': Timestamp.fromDate(date),
     };
+  }
+
+  static Object? fromMap(Map<String, dynamic> data, String id) {
+    return ExpenseModel.fromJson(data, id);
   }
 }
